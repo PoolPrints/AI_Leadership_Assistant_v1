@@ -4,21 +4,33 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setResults(null);
+    setError("");
 
-    const res = await fetch("/api/rewrite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input }),
-    });
+    try {
+      const res = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input }), // 🔧 match backend key
+      });
 
-    const data = await res.json();
-    setResults(data);
-    setLoading(false);
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      setError("Failed to get rewrite. Please try again.");
+      console.error("Rewrite error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,6 +52,8 @@ export default function Home() {
           {loading ? "Rewriting..." : "Rewrite"}
         </button>
       </form>
+
+      {error && <p className="text-red-600 mt-4">{error}</p>}
 
       {results && (
         <div className="mt-8 space-y-6">
